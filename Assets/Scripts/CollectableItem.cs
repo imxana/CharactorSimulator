@@ -82,7 +82,6 @@ public class CollectableItem : MonoBehaviour
 		// set the key tips
 		bool i = mat == ItemMatInReach;
 		transform.Find ("TipsQuad").gameObject.SetActive(i);
-
 	}
 
 

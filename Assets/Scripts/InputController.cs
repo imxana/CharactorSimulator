@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 public class InputController : MonoBehaviour
 {
-
+	public GameObject HelpPanel;
 	public GameObject PackagePanel;
 	public GameObject TipsPanel;
 	public GameObject ItemRootPanel;
@@ -18,12 +18,12 @@ public class InputController : MonoBehaviour
 
 	// for key maps
 	private Dictionary<Actions, string> KeyMap = new Dictionary<Actions, string>();
-	private bool itemSelected = false;
+	private int SelectedItemIndex = 0;
 
 	enum Actions
 	{
 		Item1,Item2,Item3,Item4,Item5,Item6,Item7,Item8,Item9,Item0,
-		Backpack,TipsPanel,Reach,Pick,Check
+		Inventory,TipsPanel,Reach,Pick,Check,Use,Help,Discard
 	}
 
 	void KeySet()
@@ -38,53 +38,77 @@ public class InputController : MonoBehaviour
 		KeyMap.Add (Actions.Item8, "8");
 		KeyMap.Add (Actions.Item9, "9");
 		KeyMap.Add (Actions.Item0, "0");
-		KeyMap.Add (Actions.Backpack,  "b");
+		KeyMap.Add (Actions.Inventory, "i");
 		KeyMap.Add (Actions.TipsPanel, "t");
-		KeyMap.Add (Actions.Reach,     "r");
-		KeyMap.Add (Actions.Pick,      "e");
-		KeyMap.Add (Actions.Check,   "q");
+		KeyMap.Add (Actions.Reach, "r");
+		KeyMap.Add (Actions.Pick, "e");
+		KeyMap.Add (Actions.Check, "c");
+		KeyMap.Add (Actions.Use, "f");
+		KeyMap.Add (Actions.Help, "h");
+		KeyMap.Add (Actions.Discard, "q");
+
+	}
+
+	void HelpPanelForKeyTips()
+	{
+		string text = "";
+		int WrapCount = 0;
+		foreach (KeyValuePair<Actions, string> pair in KeyMap) 
+		{
+			text += string.Format("{0}: {1}   ",pair.Key,pair.Value);
+			WrapCount++;
+			if (WrapCount % 2 == 0) {text += "\n";}
+		}
+		HelpPanel.transform.Find("Text").GetComponent<Text>().text = text;
 	}
 
 	// Use this for initialization
 	void Start () 
 	{
 		KeySet ();
+		HelpPanelForKeyTips ();
 		PackagePanel.SetActive(false);
-//		Reach.SetActive(false);
 		ItemsInReach = new List<GameObject>();
 	}
 	
 	// Update is called once per frame
 	void Update () 
 	{
-		// open the backpack
-		if (Input.GetKeyDown (KeyMap[Actions.Backpack])) { PackagePanel.SetActive (!PackagePanel.activeSelf); }
-
-		// open the tips panel
+		// HelpPanel On/Off
+		if (Input.GetKeyDown (KeyMap[Actions.Help])) { HelpPanelForKeyTips (); HelpPanel.SetActive (!HelpPanel.activeSelf); }
+		// Inventory On/Off
+		if (Input.GetKeyDown (KeyMap[Actions.Inventory])) { PackagePanel.SetActive (!PackagePanel.activeSelf); }
+		// TipsPanel On/Off
 		if (Input.GetKeyDown (KeyMap[Actions.TipsPanel]))	{ TipsPanel.SetActive (!TipsPanel.activeSelf); }
-
-		// render the reach range
+		// Reach On/Off
 		if (Input.GetKeyDown (KeyMap[Actions.Reach])){Reach.GetComponent<Renderer>().enabled = !Reach.GetComponent<Renderer>().enabled;}
-
-		// collect one item
+		// collecting one item
 		if (Input.GetKeyDown (KeyMap[Actions.Pick])) { PickItem(); }
 		if (Input.GetKeyDown (KeyMap[Actions.Pick])) { picked = false; }
-
-		// set collecting state
+		// set collecting state (for updating so fast that picking one item twice)
 		if (Input.GetKeyDown (KeyMap[Actions.Check])) { isChecking = true; }
 		if (Input.GetKeyUp (KeyMap[Actions.Check]))  { isChecking = false; }
+		// use/put item
+		if (Input.GetKeyDown(KeyMap[Actions.Use])) {GetComponent<Package>().ItemUse(SelectedItemIndex);}
+		// discard item
+		if (Input.GetKeyDown(KeyMap[Actions.Discard])) {GetComponent<Package>().ItemDiscard(SelectedItemIndex);}
+		// item keys
+		if (Input.GetKeyDown(KeyMap[Actions.Item1])) { SelectedItemIndex = 0; }
+		else if (Input.GetKeyDown(KeyMap[Actions.Item2])) { SelectedItemIndex = 1; }
+		else if (Input.GetKeyDown(KeyMap[Actions.Item3])) { SelectedItemIndex = 2; }
+		else if (Input.GetKeyDown(KeyMap[Actions.Item4])) { SelectedItemIndex = 3; }
+		else if (Input.GetKeyDown(KeyMap[Actions.Item5])) { SelectedItemIndex = 4; }
+		else if (Input.GetKeyDown(KeyMap[Actions.Item6])) { SelectedItemIndex = 5; }
+		else if (Input.GetKeyDown(KeyMap[Actions.Item7])) { SelectedItemIndex = 6; }
+		else if (Input.GetKeyDown(KeyMap[Actions.Item8])) { SelectedItemIndex = 7; }
+		else if (Input.GetKeyDown(KeyMap[Actions.Item9])) { SelectedItemIndex = 8; }
+		else if (Input.GetKeyDown(KeyMap[Actions.Item0])) { SelectedItemIndex = 9; }
+		ResetItemRootPanelSelected (); 
+		SetItemRootPanelSelected (SelectedItemIndex, true); 
 
-
-		if (Input.GetKeyDown(KeyMap[Actions.Item1])) { ResetItemRootPanelSelected (); SetItemRootPanelSelected (0, true); } 
-		else if (Input.GetKeyDown(KeyMap[Actions.Item2])) { ResetItemRootPanelSelected (); SetItemRootPanelSelected (1, true); }
-		else if (Input.GetKeyDown(KeyMap[Actions.Item3])) { ResetItemRootPanelSelected (); SetItemRootPanelSelected (2, true); }
-		else if (Input.GetKeyDown(KeyMap[Actions.Item4])) { ResetItemRootPanelSelected (); SetItemRootPanelSelected (3, true); }
-		else if (Input.GetKeyDown(KeyMap[Actions.Item5])) { ResetItemRootPanelSelected (); SetItemRootPanelSelected (4, true); }
-		else if (Input.GetKeyDown(KeyMap[Actions.Item6])) { ResetItemRootPanelSelected (); SetItemRootPanelSelected (5, true); }
-		else if (Input.GetKeyDown(KeyMap[Actions.Item7])) { ResetItemRootPanelSelected (); SetItemRootPanelSelected (6, true); }
-		else if (Input.GetKeyDown(KeyMap[Actions.Item8])) { ResetItemRootPanelSelected (); SetItemRootPanelSelected (7, true); }
-		else if (Input.GetKeyDown(KeyMap[Actions.Item9])) { ResetItemRootPanelSelected (); SetItemRootPanelSelected (8, true); }
-		else if (Input.GetKeyDown(KeyMap[Actions.Item0])) { ResetItemRootPanelSelected (); SetItemRootPanelSelected (9, true); }
+		// wheel to select item
+		if (Input.GetAxis("Mouse ScrollWheel") < 0) { SelectedItemIndex = (SelectedItemIndex+1)%10; }
+		if (Input.GetAxis("Mouse ScrollWheel") > 0) { SelectedItemIndex = (SelectedItemIndex+9)%10; }
 	}
 
 	void ResetItemRootPanelSelected()
@@ -92,45 +116,42 @@ public class InputController : MonoBehaviour
 		for (int i = 0; i < ItemRootPanel.transform.childCount; i++) 
 		{
 			SetItemRootPanelSelected (i, false);
-			itemSelected = false;
 		}
 	}
 
-	void SetItemRootPanelSelected(int i, bool b)
+	void SetItemRootPanelSelected(int i, bool b = true)
 	{
 		Transform itemPanel = ItemRootPanel.transform.GetChild (i);
 		itemPanel.Find ("Selected").gameObject.SetActive (b);
-		itemSelected = true;
 	}
 
 
 	void PickItem()
 	{
-		if (picked) {return;}
-		if (ItemsInReach.Count > 0) {
+		// prevent from picking twice
+		if (picked) return;
+		picked = true;
 
+		// At least one item in reach
+		if (ItemsInReach.Count > 0) {
 			for (int i = 0; i < ItemsInReach.Count; i++)
 			{
-				// the top prefab
-				GameObject top = ItemsInReach[i]; 
+				GameObject itemPrefab = ItemsInReach[i]; 
 
-				// add in package (pick one at a time)
-				bool isRemoved = GetComponent<Package> ().PackageAddItem (top);
+				// check inventory is full
+				bool inventoryIsFull = GetComponent<Package> ().PackageAddItem (itemPrefab.GetComponent<CollectableItem>().ItemRefrence);
 
 				// if adding, destroy in scene
-				if (isRemoved) {
-					ItemsInReach.Remove (top);
-					Destroy (top);
-					break;
-				} else {
-					//GameObject TipsPanel = GetComponent<InputController> ().TipsPanel;
+				if (inventoryIsFull) {
 					TipsPanel.transform.Find ("Text").GetComponent<Text>().text = "Inventory is full";
 					TipsPanel.SetActive (true);
-
+				} else {
+					ItemsInReach.Remove (itemPrefab);
+					Destroy (itemPrefab);
+					break; // just pick one at a time
 				};
-
 			}
 		}
-		picked = true;
 	}
+
 }

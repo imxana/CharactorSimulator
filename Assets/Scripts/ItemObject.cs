@@ -3,10 +3,12 @@
 [CreateAssetMenu(menuName = "Item Object")]
 public class ItemObject : ScriptableObject
 {
+
+
 	public GameObject objectPrefab;
 	public Sprite objectImage;
 	public int quantity = 0;
-	//public InvantoryItemLogic itemLogic;
+	public ItemObjectLogic itemLogic;
 	//public string objectTooltip;
 
 }

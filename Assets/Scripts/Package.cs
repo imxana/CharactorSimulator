@@ -5,12 +5,19 @@ using UnityEngine.UI;
 
 public class Package : MonoBehaviour 
 {
-	public GameObject itemsRoot; // the ui root
+	// the items show in she scene
 	public GameObject exmapleItem;
 	public GameObject exmapleItem2;
 
+	public GameObject currentItemsRoot; // the ui root
+	public GameObject packageItemsRoot; // the ui root
+
 	private int maxCurrentItems = 10;
-	private GameObject itemObjectTemplate;
+	private int maxInventoryRow = 4; // maxInventoryItems = maxCurrentItems * maxInventoryRow;
+
+	private Transform currentItemsTemplate;
+	private Transform PackageItemsTemplate;
+
 	private List<ItemObject> CurrentItemsObjects;
 	private string[] keyMaps = {"1","2","3","4","5","6","7","8","9","0"};
 
@@ -18,7 +25,8 @@ public class Package : MonoBehaviour
 	void Start () 
 	{
 		CurrentItemsObjects = new List<ItemObject>(maxCurrentItems);
-		itemObjectTemplate = GameObject.Find ("ItemTemplate");
+		currentItemsTemplate = currentItemsRoot.transform.Find ("ItemTemplate");
+		PackageItemsTemplate = packageItemsRoot.transform.Find ("ItemTemplate");
 
 		initGUI ();
 
@@ -37,16 +45,17 @@ public class Package : MonoBehaviour
 
 	void initGUI()
 	{
+		// init currentItem panel
 		float padding = 5.0f;
-		var oldPos = itemObjectTemplate.GetComponent<RectTransform> ().localPosition;
-		CurrentItemsObjects.Add(new ItemObject ());
+		var oldPos = currentItemsTemplate.GetComponent<RectTransform> ().localPosition;
+		CurrentItemsObjects.Add(ScriptableObject.CreateInstance<ItemObject>());
 
 		// from index 1
 		for (int i = 1; i < maxCurrentItems ; i++) 
 		{
 			// clone the template
-			GameObject clone = Instantiate(itemObjectTemplate);
-			clone.transform.SetParent(itemsRoot.transform);
+			GameObject clone = Instantiate(currentItemsTemplate.gameObject);
+			clone.transform.SetParent(currentItemsRoot.transform);
 
 			// set clone postion
 			oldPos.x += (clone.GetComponent<RectTransform>().rect.width + padding*2);
@@ -57,11 +66,14 @@ public class Package : MonoBehaviour
 			uitext.text = keyMaps[i];
 
 			// set empty item
-			ItemObject item = new ItemObject ();
+			ItemObject item = ScriptableObject.CreateInstance<ItemObject>();
 			CurrentItemsObjects.Add(item);
 
 			oldPos = clone.GetComponent<RectTransform> ().localPosition;
 		}
+
+		// init packageItem panel
+
 	}
 
 	void ItemsInitInsert()
@@ -75,7 +87,7 @@ public class Package : MonoBehaviour
 		for (int i = 0; i < maxCurrentItems; i++) 
 		{
 			// get the paneltemplate copy
-			Transform itemPanel = itemsRoot.transform.GetChild (i);
+			Transform itemPanel = currentItemsRoot.transform.GetChild (i);
 
 			// get the data from currentItem list
 			ItemObject itemData = CurrentItemsObjects [i];
@@ -93,27 +105,24 @@ public class Package : MonoBehaviour
 	void SetItemToCurrent(int index, GameObject objectPrefab)
 	{			
 		ItemObject ItemData = objectPrefab.GetComponent<CollectableItem>().ItemRefrence;
-		//CurrentItemsObjects [index].objectPrefab = objectPrefab;
+		CurrentItemsObjects [index].objectPrefab = objectPrefab;
 		CurrentItemsObjects [index].quantity = ItemData.quantity;
 		CurrentItemsObjects [index].objectImage = ItemData.objectImage;
-//		Debug.LogFormat ("99 {0},{1}",index,CurrentItemsObjects [index].objectPrefab);
+		CurrentItemsObjects [index].itemLogic = ItemData.itemLogic;
 	}
 
-//	void SetItemToCurrent(int index, GameObject objectPrefab, int quantity, Sprite objectImage)
-//	{
-//		CurrentItemsObjects [index].objectPrefab = exmapleItem;
-//		CurrentItemsObjects [index].quantity = quantity;
-//		CurrentItemsObjects [index].objectImage = objectImage;
-//	}
 
 
-	public bool PackageAddItem(GameObject itemPrefab)
+
+	public bool PackageAddItem(ItemObject item)
 	{
-		ItemObject item = itemPrefab.GetComponent<CollectableItem>().ItemRefrence;
+		//ItemObject item = itemPrefab.GetComponent<CollectableItem>().ItemRefrence;
+		GameObject itemPrefab = item.objectPrefab;
 		int Emptyindex = CheckCurrentItemPanelEmpty();
 		int Existindex = CheckCurrentItemPanelExist(item);
 
 		// item uncountable
+//		if (item.itemLogic.itemType == ItemType.Material)
 		if (item.quantity == 0)
 		{
 			// check empty item panel
@@ -121,12 +130,12 @@ public class Package : MonoBehaviour
 			{
 				SetItemToCurrent (Emptyindex, itemPrefab);
 				RenderCurrentItems ();
-				return true;
+				return false;
 			}
 			// package full
 			else 
 			{
-				return false;
+				return true;
 			}
 		}
 
@@ -138,19 +147,19 @@ public class Package : MonoBehaviour
 			{
 				CurrentItemsObjects [Existindex].quantity += item.quantity;
 				RenderCurrentItems ();
-				return true;
+				return false;
 			}
 			// check empty item panel
 			else if (Emptyindex < maxCurrentItems)
 			{
 				SetItemToCurrent (Emptyindex, itemPrefab);
 				RenderCurrentItems ();
-				return true;
+				return false;
 			}
 			// package full
 			else 
 			{
-				return false;
+				return true;
 			}
 		}
 	}
@@ -163,11 +172,6 @@ public class Package : MonoBehaviour
 			// current panel should not contain the prefab, change to the image....
 			if (CurrentItemsObjects [i].objectImage == null) { return i; }
 		}
-
-		// for full
-		Debug.Log ("Backpack full!");
-
-
 		return 999;
 	}
 
@@ -179,7 +183,58 @@ public class Package : MonoBehaviour
 			// same image should be the same thing...
 			if (CurrentItemsObjects[i].objectImage == item.objectImage) { return i; }
 		}
-		Debug.Log ("Items Exists");
 		return 999;
+	}
+
+	public void ItemUse(int i)
+	{
+		// empty, just return
+		if (CurrentItemsObjects [i].objectImage == null) return;
+
+		// use effect
+		ItemObjectLogic itemLogic = CurrentItemsObjects [i].itemLogic;
+		itemLogic.UseItem(transform.Find ("Misaki_SchoolUniform_summer"), CurrentItemsObjects [i]);
+
+		// reduce from panel
+		if (CurrentItemsObjects [i].quantity > 1) 
+		{
+			CurrentItemsObjects [i].quantity -= 1;
+		} 
+		else 
+		{
+			CurrentItemsObjects [i] = ScriptableObject.CreateInstance<ItemObject> ();
+		}
+		RenderCurrentItems();
+	}
+
+	public void ItemDiscard(int i)
+	{
+		// nothing to discard
+		if (CurrentItemsObjects [i].objectImage == null) return;
+
+		int OneTimeDiscard = 3;
+		ItemObjectLogic itemLogic = CurrentItemsObjects [i].itemLogic;
+		Transform tf = transform.Find ("Misaki_SchoolUniform_summer");
+
+		// discard to the plane and reduce from panel
+		if (CurrentItemsObjects [i].quantity > OneTimeDiscard) {
+			itemLogic.DiscardItem (tf, CurrentItemsObjects [i], OneTimeDiscard);
+			CurrentItemsObjects [i].quantity -= OneTimeDiscard;
+		} 
+		else if(CurrentItemsObjects [i].quantity > 0)
+		{
+			itemLogic.DiscardItem (tf, CurrentItemsObjects [i], CurrentItemsObjects [i].quantity);
+			CurrentItemsObjects [i] = ScriptableObject.CreateInstance<ItemObject> ();
+		}
+		else if(CurrentItemsObjects [i].quantity == 0) // uncountable
+		{
+			itemLogic.DiscardItem (tf, CurrentItemsObjects [i]);
+			CurrentItemsObjects [i] = ScriptableObject.CreateInstance<ItemObject> ();
+		}
+		else
+		{
+			CurrentItemsObjects [i] = ScriptableObject.CreateInstance<ItemObject> ();
+		}
+		RenderCurrentItems();
 	}
 }
