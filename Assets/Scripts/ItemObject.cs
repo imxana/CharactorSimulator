@@ -9,6 +9,6 @@ public class ItemObject : ScriptableObject
 	public Sprite objectImage;
 	public int quantity = 0;
 	public ItemObjectLogic itemLogic;
-	//public string objectTooltip;
+	public string objectTooltip;
 
 }

@@ -12,6 +12,9 @@ public class Package : MonoBehaviour
 	public GameObject currentItemsRoot; // the ui root
 	public GameObject packageItemsRoot; // the ui root
 
+	// the quantity of one-time dicarding items
+	public int OneTimeDiscard = 3;
+
 	private int maxCurrentItems = 10;
 	private int maxInventoryRow = 4; // maxInventoryItems = maxCurrentItems * maxInventoryRow;
 
@@ -212,7 +215,6 @@ public class Package : MonoBehaviour
 		// nothing to discard
 		if (CurrentItemsObjects [i].objectImage == null) return;
 
-		int OneTimeDiscard = 3;
 		ItemObjectLogic itemLogic = CurrentItemsObjects [i].itemLogic;
 		Transform tf = transform.Find ("Misaki_SchoolUniform_summer");
 

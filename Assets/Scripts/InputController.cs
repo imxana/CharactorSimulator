@@ -49,9 +49,9 @@ public class InputController : MonoBehaviour
 
 	}
 
-	void HelpPanelForKeyTips()
+	void KeyTipsForHelpPanel()
 	{
-		string text = "";
+		string text = "Key Maps\n\n";
 		int WrapCount = 0;
 		foreach (KeyValuePair<Actions, string> pair in KeyMap) 
 		{
@@ -66,7 +66,7 @@ public class InputController : MonoBehaviour
 	void Start () 
 	{
 		KeySet ();
-		HelpPanelForKeyTips ();
+		KeyTipsForHelpPanel ();
 		PackagePanel.SetActive(false);
 		ItemsInReach = new List<GameObject>();
 	}
@@ -75,7 +75,7 @@ public class InputController : MonoBehaviour
 	void Update () 
 	{
 		// HelpPanel On/Off
-		if (Input.GetKeyDown (KeyMap[Actions.Help])) { HelpPanelForKeyTips (); HelpPanel.SetActive (!HelpPanel.activeSelf); }
+		if (Input.GetKeyDown (KeyMap[Actions.Help])) { KeyTipsForHelpPanel (); HelpPanel.SetActive (!HelpPanel.activeSelf); }
 		// Inventory On/Off
 		if (Input.GetKeyDown (KeyMap[Actions.Inventory])) { PackagePanel.SetActive (!PackagePanel.activeSelf); }
 		// TipsPanel On/Off
@@ -143,7 +143,7 @@ public class InputController : MonoBehaviour
 
 				// if adding, destroy in scene
 				if (inventoryIsFull) {
-					TipsPanel.transform.Find ("Text").GetComponent<Text>().text = "Inventory is full";
+					TipsPanel.transform.Find ("Text").GetComponent<Text>().text = "Inventory is full" + "\n" + RandomFace();
 					TipsPanel.SetActive (true);
 				} else {
 					ItemsInReach.Remove (itemPrefab);
@@ -152,6 +152,13 @@ public class InputController : MonoBehaviour
 				};
 			}
 		}
+	}
+
+	// not too boring
+	string RandomFace()
+	{
+		string[] o = {" (`･ω･´)ゞ"," (̿?̿̿Ĺ̯̿̿?̿ ̿)̄ " ," ( ‾ʖ̫‾) ", " ( •̀ .̫ •́ )✧"," (｀◕‸◕´+)"," ( ∙̆ .̯ ∙̆ )"};
+		return o[Random.Range(0, o.Length)];
 	}
 
 }
