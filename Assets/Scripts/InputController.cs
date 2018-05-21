@@ -5,25 +5,36 @@ using UnityEngine.UI;
 
 public class InputController : MonoBehaviour
 {
+	// the UI panels
 	public GameObject HelpPanel;
 	public GameObject PackagePanel;
 	public GameObject TipsPanel;
 	public GameObject ItemRootPanel;
-	public GameObject Reach;
 
-	// public to other script
-	public List<GameObject> ItemsInReach;
+	public GameObject p2;
+
+	// for items in reach
+	public GameObject Reach;
 	public bool isChecking = false;
-	public bool picked = false;
+	private bool picked = false;
 
 	// for key maps
 	private Dictionary<Actions, string> KeyMap = new Dictionary<Actions, string>();
 	private int SelectedItemIndex = 0;
 
+	const string ModName = "Misaki_SchoolUniform_summer";
+	const string Mod2Name = "Yuko_SchoolUniform_Winter";
+
+
 	enum Actions
 	{
+		// applied
 		Item1,Item2,Item3,Item4,Item5,Item6,Item7,Item8,Item9,Item0,
-		Inventory,TipsPanel,Reach,Pick,Check,Use,Help,Discard
+		Inventory,TipsPanel,Reach,Pick,Check,Use,Help,Discard,Test,
+
+		// test
+		View,
+		QuickTurn
 	}
 
 	void KeySet()
@@ -46,6 +57,9 @@ public class InputController : MonoBehaviour
 		KeyMap.Add (Actions.Use, "f");
 		KeyMap.Add (Actions.Help, "h");
 		KeyMap.Add (Actions.Discard, "q");
+		KeyMap.Add (Actions.View, "v"); // just for test
+		KeyMap.Add (Actions.QuickTurn, "z"); // just for test
+		KeyMap.Add (Actions.Test, "x"); // just for test
 
 	}
 
@@ -68,14 +82,20 @@ public class InputController : MonoBehaviour
 		KeySet ();
 		KeyTipsForHelpPanel ();
 		PackagePanel.SetActive(false);
-		ItemsInReach = new List<GameObject>();
+
+//		ItemsInReach = Reach.GetComponent<ReachScript> ().ItemsInReach;
 	}
-	
+
+	void StartLater()
+	{
+		
+	}
+
 	// Update is called once per frame
 	void Update () 
 	{
 		// HelpPanel On/Off
-		if (Input.GetKeyDown (KeyMap[Actions.Help])) { KeyTipsForHelpPanel (); HelpPanel.SetActive (!HelpPanel.activeSelf); }
+		if (Input.GetKeyDown (KeyMap[Actions.Help])) { KeyTipsForHelpPanel ();TipsPanel.SetActive (false); HelpPanel.SetActive (!HelpPanel.activeSelf); }
 		// Inventory On/Off
 		if (Input.GetKeyDown (KeyMap[Actions.Inventory])) { PackagePanel.SetActive (!PackagePanel.activeSelf); }
 		// TipsPanel On/Off
@@ -94,6 +114,10 @@ public class InputController : MonoBehaviour
 		if (Input.GetKeyDown(KeyMap[Actions.Discard])) {GetComponent<Package>().ItemDiscard(SelectedItemIndex);}
 		// item keys
 		if (Input.GetKeyDown(KeyMap[Actions.Item1])) { SelectedItemIndex = 0; }
+		if (Input.GetKeyDown(KeyMap[Actions.View])){ TalkView (); }
+		// test funs
+		if (Input.GetKeyDown(KeyMap[Actions.Test])){ TestAction (); }
+
 		else if (Input.GetKeyDown(KeyMap[Actions.Item2])) { SelectedItemIndex = 1; }
 		else if (Input.GetKeyDown(KeyMap[Actions.Item3])) { SelectedItemIndex = 2; }
 		else if (Input.GetKeyDown(KeyMap[Actions.Item4])) { SelectedItemIndex = 3; }
@@ -111,13 +135,13 @@ public class InputController : MonoBehaviour
 		if (Input.GetAxis("Mouse ScrollWheel") > 0) { SelectedItemIndex = (SelectedItemIndex+9)%10; }
 	}
 
-	void ResetItemRootPanelSelected()
-	{
-		for (int i = 0; i < ItemRootPanel.transform.childCount; i++) 
-		{
-			SetItemRootPanelSelected (i, false);
-		}
+	void FixedUpdate(){
+		QuickTurn ();
+		TalkPlayerLocSet ();
 	}
+
+
+	void ResetItemRootPanelSelected() { for (int i = 0; i < ItemRootPanel.transform.childCount; i++)  SetItemRootPanelSelected (i, false); }
 
 	void SetItemRootPanelSelected(int i, bool b = true)
 	{
@@ -128,15 +152,15 @@ public class InputController : MonoBehaviour
 
 	void PickItem()
 	{
-		// prevent from picking twice
+		// prevent one item from being picked twice
 		if (picked) return;
 		picked = true;
 
 		// At least one item in reach
-		if (ItemsInReach.Count > 0) {
-			for (int i = 0; i < ItemsInReach.Count; i++)
+		if (Reach.GetComponent<ReachScript> ().ItemsInReach.Count > 0) {
+			for (int i = 0; i < Reach.GetComponent<ReachScript> ().ItemsInReach.Count; i++)
 			{
-				GameObject itemPrefab = ItemsInReach[i]; 
+				GameObject itemPrefab = Reach.GetComponent<ReachScript> ().ItemsInReach[i]; 
 
 				// check inventory is full
 				bool inventoryIsFull = GetComponent<Package> ().PackageAddItem (itemPrefab.GetComponent<CollectableItem>().ItemRefrence);
@@ -146,12 +170,95 @@ public class InputController : MonoBehaviour
 					TipsPanel.transform.Find ("Text").GetComponent<Text>().text = "Inventory is full" + "\n" + RandomFace();
 					TipsPanel.SetActive (true);
 				} else {
-					ItemsInReach.Remove (itemPrefab);
+					TipsPanel.SetActive (false);
+					Reach.GetComponent<ReachScript> ().ItemsInReach.Remove (itemPrefab);
 					Destroy (itemPrefab);
 					break; // just pick one at a time
 				};
 			}
 		}
+	}
+
+	// should lock some keys
+	private bool isTalking = false;
+
+	void TalkView()
+	{
+		Transform cameraTarget = transform.Find (ModName).Find("CameraTarget");
+
+		if (isTalking) {
+			cameraTarget.localPosition = Vector3.zero;
+			cameraTarget.localEulerAngles = Vector3.zero;
+			isTalking = false;
+		} else {
+			cameraTarget.localPosition = new Vector3 (0, -0.5f, 0.75f);
+			cameraTarget.localEulerAngles = new Vector3 (0, -22.5f, 0);
+			isTalking = true;
+			willTalk = 2;
+			isRotating = false;
+		}
+	}
+
+	public float talkingDistance = 1.5f;
+	private int willTalk = 0;
+	private Vector3 talkTarget;
+
+	// update in fixedupdate
+	void TalkPlayerLocSet()
+	{
+		Transform pt = transform.Find (ModName);
+		Transform p2t = p2.transform.Find (Mod2Name);
+		if (willTalk == 2) {
+			willTalk = 1;
+			Vector3 Dir = p2t.position - pt.position;
+			talkTarget = pt.position + Dir.normalized * (Dir.magnitude - talkingDistance);
+		} else if (willTalk == 1) {
+			pt.position = Vector3.Lerp (pt.position, talkTarget, Time.fixedDeltaTime * 10f);
+			pt.LookAt (p2t);
+
+			//p2t.LookAt (pt);
+			NPCController c = p2.GetComponent<NPCController>();
+
+			c.player = pt;
+
+			c.LookAtSth = NPCController.LookState.LookToPlayer;
+
+			if (Vector3.Distance(pt.position, talkTarget) < 0.1f) willTalk = 0;
+		}
+
+
+
+		// just flash to there
+		//transform.Find (ModName).position = TargetPos;
+	}
+
+	private bool isRotating;
+	private Vector3 turnTarget;
+	public float turnspeed = 10f;
+
+	// update in fixedupdate
+	void QuickTurn()
+	{
+		Transform p = transform.Find (ModName);
+		if (isRotating) {
+			Quaternion quaDir = Quaternion.LookRotation(turnTarget, Vector3.up);
+			p.rotation = Quaternion.Lerp (p.rotation, quaDir, Time.fixedDeltaTime * turnspeed);
+
+			if (Quaternion.Angle (p.rotation, quaDir) < 1) {isRotating = false;}
+		} else {
+			if( Input.GetKeyDown(KeyMap[Actions.QuickTurn]) ){
+				isRotating = true;
+				//				turnTarget = new Vector3 (hor,0,ver);
+				turnTarget = -p.forward;
+			}
+		}
+	}
+
+	void TestAction()
+	{
+		Debug.Log (transform.Find (ModName).GetComponent<Rigidbody> ());
+		transform.Find (ModName).GetComponent<Rigidbody> ().velocity = Vector3.forward;
+		transform.Find (ModName).GetComponent<Rigidbody> ().angularVelocity = Vector3.zero;
 	}
 
 	// not too boring

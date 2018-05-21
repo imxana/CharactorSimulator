@@ -12,6 +12,8 @@ public class Package : MonoBehaviour
 	public GameObject currentItemsRoot; // the ui root
 	public GameObject packageItemsRoot; // the ui root
 
+	private const int _M = 9999;
+
 	// the quantity of one-time dicarding items
 	public int OneTimeDiscard = 3;
 
@@ -117,9 +119,13 @@ public class Package : MonoBehaviour
 
 
 
-	public bool PackageAddItem(ItemObject item)
+	public bool PackageAddItem(ItemObject item, bool exec = true)
 	{
-		//ItemObject item = itemPrefab.GetComponent<CollectableItem>().ItemRefrence;
+		/* 
+		 * check if package is full for one item
+		 */
+//ItemObject item = itemPrefab.GetComponent<CollectableItem>().ItemRefrence;
+		if (item == null) Debug.Log(1111);
 		GameObject itemPrefab = item.objectPrefab;
 		int Emptyindex = CheckCurrentItemPanelEmpty();
 		int Existindex = CheckCurrentItemPanelExist(item);
@@ -131,8 +137,11 @@ public class Package : MonoBehaviour
 			// check empty item panel
 			if (Emptyindex < maxCurrentItems)
 			{
-				SetItemToCurrent (Emptyindex, itemPrefab);
-				RenderCurrentItems ();
+				if (exec) 
+				{
+					SetItemToCurrent (Emptyindex, itemPrefab);
+					RenderCurrentItems ();
+				}
 				return false;
 			}
 			// package full
@@ -148,15 +157,21 @@ public class Package : MonoBehaviour
 			// check the same item
 			if (Existindex < maxCurrentItems)
 			{
-				CurrentItemsObjects [Existindex].quantity += item.quantity;
-				RenderCurrentItems ();
+				if (exec) 
+				{
+					CurrentItemsObjects [Existindex].quantity += item.quantity;
+					RenderCurrentItems ();
+				}
 				return false;
 			}
 			// check empty item panel
 			else if (Emptyindex < maxCurrentItems)
 			{
-				SetItemToCurrent (Emptyindex, itemPrefab);
-				RenderCurrentItems ();
+				if (exec) 
+				{
+					SetItemToCurrent (Emptyindex, itemPrefab);
+					RenderCurrentItems ();
+				}
 				return false;
 			}
 			// package full
@@ -175,7 +190,7 @@ public class Package : MonoBehaviour
 			// current panel should not contain the prefab, change to the image....
 			if (CurrentItemsObjects [i].objectImage == null) { return i; }
 		}
-		return 999;
+		return _M;
 	}
 
 	int CheckCurrentItemPanelExist(ItemObject item)
@@ -186,8 +201,10 @@ public class Package : MonoBehaviour
 			// same image should be the same thing...
 			if (CurrentItemsObjects[i].objectImage == item.objectImage) { return i; }
 		}
-		return 999;
+		return _M;
 	}
+
+
 
 	public void ItemUse(int i)
 	{

@@ -9,6 +9,10 @@ public class CollectableItem : MonoBehaviour
 	public Material ItemMatInReach;
 	public Material ItemMatInReach2;
 
+	public Material TipsCollectable;
+	public Material TipsFull;
+
+
 	private MeshRenderer mesh;
 	private bool inReach;
 	private bool justSpawned;
@@ -36,14 +40,11 @@ public class CollectableItem : MonoBehaviour
 		inReach = other.CompareTag ("InReach");
 		if (inReach)
 		{
-			player =  other.GetComponent<ReachScript>().refrence;
-			player.GetComponent<InputController>().ItemsInReach.Add (gameObject);
+			player = other.GetComponent<ReachScript> ().refrence;
+//			player.GetComponent<InputController>().ItemsInReach.Add (gameObject);
+			other.GetComponent<ReachScript> ().ItemsInReach.Add (gameObject);
 			SwitchMateria (ItemMatInReach);
-
-			// output the items count inrange
-			PrintCountInReach (player);
 		}
-
 	}
 
 	void OnTriggerExit(Collider other)
@@ -51,12 +52,11 @@ public class CollectableItem : MonoBehaviour
 		inReach = other.CompareTag ("InReach");
 		if (inReach)
 		{
-			player =  other.GetComponent<ReachScript>().refrence;
-			player.GetComponent<InputController>().ItemsInReach.Remove (gameObject);
-			SwitchMateria( ItemMat);
+			player = other.GetComponent<ReachScript>().refrence;
+//			player.GetComponent<InputController>().ItemsInReach.Remove (gameObject);
+			other.GetComponent<ReachScript>().ItemsInReach.Remove (gameObject);
 
-			// output the items count inrange
-			PrintCountInReach (player);
+			SwitchMateria(ItemMat);
 		}
 	}
 
@@ -65,11 +65,12 @@ public class CollectableItem : MonoBehaviour
 		inReach = other.CompareTag ("InReach");
 		if (inReach)
 		{
-			player = other.GetComponent<ReachScript>().refrence;
+			player = other.GetComponent<ReachScript> ().refrence;
 			if (player.GetComponent<InputController> ().isChecking) {
-				SwitchMateria(ItemMatInReach2);
-			} else
-				SwitchMateria(ItemMatInReach);
+				SwitchMateria (ItemMatInReach2);
+			} else {
+				SwitchMateria (ItemMatInReach);
+			}
 		}
 	}
 
@@ -82,11 +83,20 @@ public class CollectableItem : MonoBehaviour
 		// set the key tips
 		bool i = mat == ItemMatInReach;
 		transform.Find ("TipsQuad").gameObject.SetActive(i);
+
+		// check if package is full for item
+		bool isFull = player.GetComponent<Package> ().PackageAddItem (ItemRefrence, false);
+		if (isFull) {
+			SwitchTipsMateria (TipsFull);	
+		} else {
+			SwitchTipsMateria (TipsCollectable);
+		}
 	}
 
-
-	public void PrintCountInReach(GameObject player)
+	public void SwitchTipsMateria(Material mat)
 	{
-		//Debug.LogFormat ("Items in reach: {0}", player.GetComponent<InputController> ().ItemsInReach.Count);
+		transform.Find ("TipsQuad").GetComponent<MeshRenderer> ().material = mat;
 	}
+
+
 }
