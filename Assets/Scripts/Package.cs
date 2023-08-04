@@ -6,8 +6,10 @@ using UnityEngine.UI;
 public class Package : MonoBehaviour 
 {
 	// the items show in she scene
+	public GameObject player;
+
 	public GameObject exmapleItem;
-	public GameObject exmapleItem2;
+    public GameObject exmapleItem2;
 
 	public GameObject currentItemsRoot; // the ui root
 	public GameObject packageItemsRoot; // the ui root
@@ -213,7 +215,7 @@ public class Package : MonoBehaviour
 
 		// use effect
 		ItemObjectLogic itemLogic = CurrentItemsObjects [i].itemLogic;
-		itemLogic.UseItem(transform.Find ("Misaki_SchoolUniform_summer"), CurrentItemsObjects [i]);
+		itemLogic.UseItem(player.transform.Find ("Misaki_SchoolUniform_summer"), CurrentItemsObjects [i]);
 
 		// reduce from panel
 		if (CurrentItemsObjects [i].quantity > 1) 
@@ -233,7 +235,7 @@ public class Package : MonoBehaviour
 		if (CurrentItemsObjects [i].objectImage == null) return;
 
 		ItemObjectLogic itemLogic = CurrentItemsObjects [i].itemLogic;
-		Transform tf = transform.Find ("Misaki_SchoolUniform_summer");
+		Transform tf = player.transform.Find ("Misaki_SchoolUniform_summer");
 
 		// discard to the plane and reduce from panel
 		if (CurrentItemsObjects [i].quantity > OneTimeDiscard) {

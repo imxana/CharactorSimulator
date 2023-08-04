@@ -6,8 +6,9 @@ using UnityEngine.UI;
 public class InputController : MonoBehaviour
 {
 	// the UI panels
+	public GameObject Player;
 	public GameObject HelpPanel;
-	public GameObject PackagePanel;
+    public GameObject PackagePanel;
 	public GameObject TipsPanel;
 	public GameObject ItemRootPanel;
 
@@ -184,7 +185,7 @@ public class InputController : MonoBehaviour
 
 	void TalkView()
 	{
-		Transform cameraTarget = transform.Find (ModName).Find("CameraTarget");
+		Transform cameraTarget = Player.transform.Find (ModName).Find("CameraTarget");
 
 		if (isTalking) {
 			cameraTarget.localPosition = Vector3.zero;
@@ -206,7 +207,7 @@ public class InputController : MonoBehaviour
 	// update in fixedupdate
 	void TalkPlayerLocSet()
 	{
-		Transform pt = transform.Find (ModName);
+		Transform pt = Player.transform.Find (ModName);
 		Transform p2t = p2.transform.Find (Mod2Name);
 		if (willTalk == 2) {
 			willTalk = 1;
@@ -239,7 +240,7 @@ public class InputController : MonoBehaviour
 	// update in fixedupdate
 	void QuickTurn()
 	{
-		Transform p = transform.Find (ModName);
+		Transform p = Player.transform.Find (ModName);
 		if (isRotating) {
 			Quaternion quaDir = Quaternion.LookRotation(turnTarget, Vector3.up);
 			p.rotation = Quaternion.Lerp (p.rotation, quaDir, Time.fixedDeltaTime * turnspeed);
